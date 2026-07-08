@@ -241,6 +241,7 @@ import pandas as pd
 import streamlit as st
 from pathlib import Path
 from datetime import datetime
+import os
 
 # ---------- CONFIG ----------
 st.set_page_config(
@@ -253,11 +254,11 @@ st.set_page_config(
 # COLS_PATH = Path("../models/feature_columns.txt")
 # HISTORY_PATH = Path("../data/history.csv")  # file to store prediction history
 
-BASE_DIR = Path(__file__).resolve().parent.parent  # project root
+BASE_DIR = Path(__file__).resolve().parent  # this is /src
 
-MODEL_PATH = BASE_DIR / "models" / "log_reg_model.joblib"
-COLS_PATH = BASE_DIR / "models" / "feature_columns.txt"
-HISTORY_PATH = BASE_DIR / "data" / "history.csv"
+MODEL_PATH = BASE_DIR.parent / "models" / "log_reg_model.joblib"
+COLS_PATH = BASE_DIR.parent / "models" / "feature_columns.txt"
+HISTORY_PATH = BASE_DIR.parent / "data" / "history.csv"
 
 
 # ---------- LOAD MODEL ----------
@@ -325,7 +326,7 @@ based on operating conditions.
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("**Model file:**")
-st.sidebar.code(MODEL_PATH.name)
+st.sidebar.code(MODEL_PATH)
 
 # Show history link
 if HISTORY_PATH.exists():
