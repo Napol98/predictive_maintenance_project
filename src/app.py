@@ -236,29 +236,31 @@
 
 # src/app.py
 
+# 
+
+
+
 import joblib
 import pandas as pd
 import streamlit as st
 from pathlib import Path
 from datetime import datetime
-import os
+import random
+import time
 
 # ---------- CONFIG ----------
 st.set_page_config(
     page_title="Predictive Maintenance Dashboard",
     page_icon="🛠️",
-    layout="centered"
+    layout="wide"
 )
-
-# MODEL_PATH = Path("../models/log_reg_model.joblib")  # or rf_model.joblib
-# COLS_PATH = Path("../models/feature_columns.txt")
-# HISTORY_PATH = Path("../data/history.csv")  # file to store prediction history
 
 BASE_DIR = Path(__file__).resolve().parent  # this is /src
 
 MODEL_PATH = BASE_DIR.parent / "models" / "log_reg_model.joblib"
 COLS_PATH = BASE_DIR.parent / "models" / "feature_columns.txt"
 HISTORY_PATH = BASE_DIR.parent / "data" / "history.csv"
+
 
 # ---------- LOAD MODEL ----------
 @st.cache_resource
@@ -284,8 +286,6 @@ def append_to_history(
     pred,
 ):
     """Append a single prediction row to HISTORY_PATH (CSV)."""
-
-    # Create parent directory if needed
     HISTORY_PATH.parent.mkdir(parents=True, exist_ok=True)
 
     row = {
@@ -297,10 +297,9 @@ def append_to_history(
         "tool_wear_min": tool_wear,
         "machine_type": machine_type,
         "failure_probability": proba,
-        "prediction": int(pred),  # 0 or 1
+        "prediction": int(pred),
     }
 
-    # If file exists, append; otherwise create
     if HISTORY_PATH.exists():
         df_old = pd.read_csv(HISTORY_PATH)
         df_new = pd.concat([df_old, pd.DataFrame([row])], ignore_index=True)
@@ -310,89 +309,8 @@ def append_to_history(
     df_new.to_csv(HISTORY_PATH, index=False)
 
 
-# ---------- SIDEBAR ----------
-st.sidebar.title("About this app")
-st.sidebar.markdown(
-    """
-This dashboard predicts whether a machine is likely to **fail**  
-based on operating conditions.
-
-**Tips:**
-- Adjust the sliders.
-- Click **Predict Failure** to log a new entry.
-"""
-)
-
-st.sidebar.markdown("---")
-st.sidebar.markdown("**Model file:**")
-st.sidebar.code(MODEL_PATH)
-
-# Show history link
-if HISTORY_PATH.exists():
-    st.sidebar.markdown("**History file:**")
-    st.sidebar.code(str(HISTORY_PATH))
-
-
-# ---------- MAIN TITLE ----------
-st.title("🛠️ Predictive Maintenance - Failure Prediction")
-
-st.markdown(
-    """
-Use the controls below to simulate machine conditions and estimate  
-the probability of **machine failure**.
-"""
-)
-
-st.markdown("---")
-
-# ---------- INPUT FORM ----------
-st.subheader("1️⃣ Enter Machine Parameters")
-
-with st.form("input_form"):
-    col1, col2 = st.columns(2)
-
-    with col1:
-        air_temp_c = st.number_input(
-            "Air temperature [°C]",
-            value=27.0,
-            help="Ambient temperature around the machine"
-        )
-        process_temp_c = st.number_input(
-            "Process temperature [°C]",
-            value=37.0,
-            help="Temperature of the process or material"
-        )
-        rot_speed = st.number_input(
-            "Rotational speed [rpm]",
-            value=1500.0,
-            min_value=0.0,
-            help="Speed of the spindle or rotating part"
-        )
-
-    with col2:
-        torque = st.number_input(
-            "Torque [Nm]",
-            value=40.0,
-            min_value=0.0,
-            help="Torque applied during operation"
-        )
-        tool_wear = st.number_input(
-            "Tool wear [min]",
-            value=100.0,
-            min_value=0.0,
-            help="Total time the tool has been in use"
-        )
-        machine_type = st.selectbox(
-            "Machine Type",
-            options=["L", "M", "H"],
-            help="L = Low quality, M = Medium, H = High"
-        )
-
-    submitted = st.form_submit_button("🔍 Predict Failure")
-
-# ---------- PREDICTION ----------
-if submitted:
-    # Convert °C to K for the model
+# ---------- HELPER: BUILD ENCODED INPUT ----------
+def build_encoded_input(air_temp_c, process_temp_c, rot_speed, torque, tool_wear, machine_type):
     air_temp_k = air_temp_c + 273.15
     process_temp_k = process_temp_c + 273.15
 
@@ -406,16 +324,82 @@ if submitted:
     }
 
     raw_df = pd.DataFrame([input_dict])
-
-    # One-hot encode and align with training features
     input_encoded = pd.get_dummies(raw_df, drop_first=True)
     input_encoded = input_encoded.reindex(columns=feature_cols, fill_value=0)
+    return input_encoded
 
-    # Make prediction
+
+# ---------- SIDEBAR: ABOUT + INPUT FORM ----------
+st.sidebar.title("🛠️ About this app")
+st.sidebar.markdown(
+    """
+This dashboard predicts whether a machine is likely to **fail**
+based on operating conditions.
+
+**Tips:**
+- Adjust the values below.
+- Click **Predict Failure** to log a new entry.
+"""
+)
+st.sidebar.markdown("---")
+
+st.sidebar.header("⚙️ Machine Parameters")
+
+with st.sidebar.form("input_form"):
+    air_temp_c = st.number_input(
+        "Air temperature [°C]", value=27.0,
+        help="Ambient temperature around the machine"
+    )
+    process_temp_c = st.number_input(
+        "Process temperature [°C]", value=37.0,
+        help="Temperature of the process or material"
+    )
+    rot_speed = st.number_input(
+        "Rotational speed [rpm]", value=1500.0, min_value=0.0,
+        help="Speed of the spindle or rotating part"
+    )
+    torque = st.number_input(
+        "Torque [Nm]", value=40.0, min_value=0.0,
+        help="Torque applied during operation"
+    )
+    tool_wear = st.number_input(
+        "Tool wear [min]", value=100.0, min_value=0.0,
+        help="Total time the tool has been in use"
+    )
+    machine_type = st.selectbox(
+        "Machine Type", options=["L", "M", "H"],
+        help="L = Low quality, M = Medium, H = High"
+    )
+
+    submitted = st.form_submit_button("🔍 Predict Failure", use_container_width=True)
+
+st.sidebar.markdown("---")
+st.sidebar.markdown("**Model file:**")
+st.sidebar.code(str(MODEL_PATH))
+
+if HISTORY_PATH.exists():
+    st.sidebar.markdown("**History file:**")
+    st.sidebar.code(str(HISTORY_PATH))
+
+
+# ---------- MAIN TITLE ----------
+st.title("🛠️ Predictive Maintenance – Failure Prediction")
+st.markdown(
+    "Use the sidebar controls to simulate machine conditions and estimate "
+    "the probability of **machine failure**."
+)
+st.markdown("---")
+
+
+# ---------- PREDICTION RESULT ----------
+if submitted:
+    input_encoded = build_encoded_input(
+        air_temp_c, process_temp_c, rot_speed, torque, tool_wear, machine_type
+    )
+
     proba = model.predict_proba(input_encoded)[0, 1]
     pred = model.predict(input_encoded)[0]
 
-    # Save to history
     append_to_history(
         air_temp_c=air_temp_c,
         process_temp_c=process_temp_c,
@@ -427,20 +411,30 @@ if submitted:
         pred=pred,
     )
 
-    st.markdown("---")
-    st.subheader("2️⃣ Prediction Result")
+    st.subheader("📊 Prediction Result")
 
-    st.metric("Failure probability", f"{proba * 100:.2f}%")
+    # ---- Metric cards ----
+    prediction_label = "⚠️ Failure Likely" if pred == 1 else "✅ Normal Operation"
+    risk_level = "High" if proba >= 0.7 else "Medium" if proba >= 0.4 else "Low"
 
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Failure Probability", f"{proba * 100:.2f}%")
+    with col2:
+        st.metric("Prediction", prediction_label)
+    with col3:
+        st.metric("Risk Level", risk_level)
+
+    # ---- Alert banner ----
     if proba >= 0.7:
-        st.error("High risk of **FAILURE** – immediate attention recommended.")
+        st.error("🚨 High risk of **FAILURE** – immediate attention recommended.")
     elif proba >= 0.4:
-        st.warning("Medium risk – monitor the machine closely.")
+        st.warning("⚠️ Medium risk – monitor the machine closely.")
     else:
-        st.success("Low risk – **no failure** predicted under current conditions.")
+        st.success("✅ Low risk – **no failure** predicted under current conditions.")
 
-    # Input summary (human readable)
-    st.markdown("### 3️⃣ Input Summary (Human-Readable)")
+    # ---- Input summary ----
+    st.markdown("#### Input Summary (Human-Readable)")
     display_df = pd.DataFrame(
         [{
             "Air temperature [°C]": air_temp_c,
@@ -455,7 +449,54 @@ if submitted:
     )
     st.table(display_df)
 else:
-    st.info("Fill in the machine parameters above and click **Predict Failure**.")
+    st.info("Fill in the machine parameters in the sidebar and click **Predict Failure**.")
+
+
+# ---------- LIVE SIMULATION (WOW FACTOR) ----------
+st.markdown("---")
+st.subheader("📡 Live Monitoring Simulation")
+st.caption("Simulates random sensor readings every 2 seconds for 20 cycles, as if streaming from a real machine.")
+
+sim_toggle = st.toggle("Start Live Simulation")
+
+if sim_toggle:
+    placeholder = st.empty()
+
+    for i in range(20):
+        sim_air_temp_c = random.uniform(20, 35)
+        sim_process_temp_c = random.uniform(30, 45)
+        sim_rpm = random.uniform(1000, 2800)
+        sim_torque = random.uniform(10, 70)
+        sim_tool_wear = random.uniform(0, 250)
+        sim_machine_type = random.choice(["L", "M", "H"])
+
+        sim_encoded = build_encoded_input(
+            sim_air_temp_c, sim_process_temp_c, sim_rpm,
+            sim_torque, sim_tool_wear, sim_machine_type
+        )
+
+        sim_proba = model.predict_proba(sim_encoded)[0, 1]
+
+        with placeholder.container():
+            st.write(f"**Cycle {i + 1}/20** — {time.strftime('%H:%M:%S')}")
+
+            c1, c2, c3, c4 = st.columns(4)
+            c1.metric("Air Temp", f"{sim_air_temp_c:.1f} °C")
+            c2.metric("Torque", f"{sim_torque:.1f} Nm")
+            c3.metric("Tool Wear", f"{sim_tool_wear:.0f} min")
+            c4.metric("Failure Risk", f"{sim_proba * 100:.1f}%")
+
+            if sim_proba >= 0.7:
+                st.error("🚨 High risk detected in live feed!")
+            elif sim_proba >= 0.4:
+                st.warning("⚠️ Moderate risk in live feed.")
+            else:
+                st.success("✅ Normal readings.")
+
+        time.sleep(2)
+
+    st.info("Simulation ended. Toggle off and on to restart.")
+
 
 # ---------- HISTORY VIEW ----------
 st.markdown("---")
@@ -463,9 +504,7 @@ st.subheader("📜 Prediction History")
 
 if HISTORY_PATH.exists():
     hist_df = pd.read_csv(HISTORY_PATH)
-
     with st.expander("Show history table", expanded=False):
         st.dataframe(hist_df, use_container_width=True)
 else:
     st.write("No history yet. Make a prediction to start logging.")
-
