@@ -74,164 +74,164 @@
 
 # # src/app.py
 
-# import joblib
-# import pandas as pd
-# import streamlit as st
-# from pathlib import Path
+import joblib
+import pandas as pd
+import streamlit as st
+from pathlib import Path
 
-# # ---------- CONFIG ----------
-# st.set_page_config(
-#     page_title="Predictive Maintenance Dashboard",
-#     page_icon="🛠️",
-#     layout="centered"
-# )
+# ---------- CONFIG ----------
+st.set_page_config(
+    page_title="Predictive Maintenance Dashboard",
+    page_icon="🛠️",
+    layout="centered"
+)
 
-# MODEL_PATH = Path("../models/log_reg_model.joblib")  # or rf_model.joblib if you prefer
-# COLS_PATH = Path("../models/feature_columns.txt")
-
-
-# # ---------- LOAD MODEL ----------
-# @st.cache_resource
-# def load_model_and_columns():
-#     model = joblib.load(MODEL_PATH)
-#     with open(COLS_PATH, "r") as f:
-#         feature_cols = [line.strip() for line in f.readlines()]
-#     return model, feature_cols
+MODEL_PATH = Path("../models/log_reg_model.joblib")  # or rf_model.joblib if you prefer
+COLS_PATH = Path("../models/feature_columns.txt")
 
 
-# model, feature_cols = load_model_and_columns()
-
-# # ---------- SIDEBAR ----------
-# st.sidebar.title("About this app")
-# st.sidebar.markdown(
-#     """
-# This dashboard predicts whether a machine is likely to **fail**  
-# based on operating conditions.
-
-# **Tips:**
-# - Adjust the sliders on the left.
-# - Click **Predict Failure** to see the risk.
-# """
-# )
-
-# st.sidebar.markdown("---")
-# st.sidebar.markdown("**Model file:**")
-# st.sidebar.code(MODEL_PATH.name)
+# ---------- LOAD MODEL ----------
+@st.cache_resource
+def load_model_and_columns():
+    model = joblib.load(MODEL_PATH)
+    with open(COLS_PATH, "r") as f:
+        feature_cols = [line.strip() for line in f.readlines()]
+    return model, feature_cols
 
 
-# # ---------- MAIN TITLE ----------
-# st.title("🛠️ Predictive Maintenance - Failure Prediction")
+model, feature_cols = load_model_and_columns()
 
-# st.markdown(
-#     """
-# Use the controls below to simulate machine conditions and estimate  
-# the probability of **machine failure**.
-# """
-# )
+# ---------- SIDEBAR ----------
+st.sidebar.title("About this app")
+st.sidebar.markdown(
+    """
+This dashboard predicts whether a machine is likely to **fail**  
+based on operating conditions.
 
-# st.markdown("---")
+**Tips:**
+- Adjust the sliders on the left.
+- Click **Predict Failure** to see the risk.
+"""
+)
 
-# # ---------- INPUT FORM ----------
-# st.subheader("1️⃣ Enter Machine Parameters")
+st.sidebar.markdown("---")
+st.sidebar.markdown("**Model file:**")
+st.sidebar.code(MODEL_PATH.name)
 
-# with st.form("input_form"):
-#     col1, col2 = st.columns(2)
 
-#     with col1:
-#         # Temperatures in °C for the user
-#         air_temp_c = st.number_input(
-#             "Air temperature [°C]", 
-#             value=27.0, 
-#             help="Ambient temperature around the machine"
-#         )
-#         process_temp_c = st.number_input(
-#             "Process temperature [°C]", 
-#             value=37.0, 
-#             help="Temperature of the process or material"
-#         )
-#         rot_speed = st.number_input(
-#             "Rotational speed [rpm]", 
-#             value=1500.0, 
-#             min_value=0.0,
-#             help="Speed of the spindle or rotating part"
-#         )
+# ---------- MAIN TITLE ----------
+st.title("🛠️ Predictive Maintenance - Failure Prediction")
 
-#     with col2:
-#         torque = st.number_input(
-#             "Torque [Nm]", 
-#             value=40.0, 
-#             min_value=0.0,
-#             help="Torque applied during operation"
-#         )
-#         tool_wear = st.number_input(
-#             "Tool wear [min]", 
-#             value=100.0, 
-#             min_value=0.0,
-#             help="Total time the tool has been in use"
-#         )
-#         machine_type = st.selectbox(
-#             "Machine Type", 
-#             options=["L", "M", "H"],
-#             help="L = Low quality, M = Medium, H = High"
-#         )
+st.markdown(
+    """
+Use the controls below to simulate machine conditions and estimate  
+the probability of **machine failure**.
+"""
+)
 
-#     submitted = st.form_submit_button("🔍 Predict Failure")
+st.markdown("---")
 
-# # ---------- PREDICTION ----------
-# if submitted:
-#     # Convert °C to K for the model
-#     air_temp_k = air_temp_c + 273.15
-#     process_temp_k = process_temp_c + 273.15
+# ---------- INPUT FORM ----------
+st.subheader("1️⃣ Enter Machine Parameters")
 
-#     # Raw input as the model expects (K, not °C)
-#     input_dict = {
-#         "Air temperature [K]": air_temp_k,
-#         "Process temperature [K]": process_temp_k,
-#         "Rotational speed [rpm]": rot_speed,
-#         "Torque [Nm]": torque,
-#         "Tool wear [min]": tool_wear,
-#         "Type": machine_type,
-#     }
+with st.form("input_form"):
+    col1, col2 = st.columns(2)
 
-#     raw_df = pd.DataFrame([input_dict])
+    with col1:
+        # Temperatures in °C for the user
+        air_temp_c = st.number_input(
+            "Air temperature [°C]", 
+            value=27.0, 
+            help="Ambient temperature around the machine"
+        )
+        process_temp_c = st.number_input(
+            "Process temperature [°C]", 
+            value=37.0, 
+            help="Temperature of the process or material"
+        )
+        rot_speed = st.number_input(
+            "Rotational speed [rpm]", 
+            value=1500.0, 
+            min_value=0.0,
+            help="Speed of the spindle or rotating part"
+        )
 
-#     # One-hot encode and align with training features
-#     input_encoded = pd.get_dummies(raw_df, drop_first=True)
-#     input_encoded = input_encoded.reindex(columns=feature_cols, fill_value=0)
+    with col2:
+        torque = st.number_input(
+            "Torque [Nm]", 
+            value=40.0, 
+            min_value=0.0,
+            help="Torque applied during operation"
+        )
+        tool_wear = st.number_input(
+            "Tool wear [min]", 
+            value=100.0, 
+            min_value=0.0,
+            help="Total time the tool has been in use"
+        )
+        machine_type = st.selectbox(
+            "Machine Type", 
+            options=["L", "M", "H"],
+            help="L = Low quality, M = Medium, H = High"
+        )
 
-#     # Make prediction
-#     proba = model.predict_proba(input_encoded)[0, 1]
-#     pred = model.predict(input_encoded)[0]
+    submitted = st.form_submit_button("🔍 Predict Failure")
 
-#     st.markdown("---")
-#     st.subheader("2️⃣ Prediction Result")
+# ---------- PREDICTION ----------
+if submitted:
+    # Convert °C to K for the model
+    air_temp_k = air_temp_c + 273.15
+    process_temp_k = process_temp_c + 273.15
 
-#     # Display probability nicely
-#     st.metric("Failure probability", f"{proba * 100:.2f}%")
+    # Raw input as the model expects (K, not °C)
+    input_dict = {
+        "Air temperature [K]": air_temp_k,
+        "Process temperature [K]": process_temp_k,
+        "Rotational speed [rpm]": rot_speed,
+        "Torque [Nm]": torque,
+        "Tool wear [min]": tool_wear,
+        "Type": machine_type,
+    }
 
-#     # Risk level message
-#     if proba >= 0.7:
-#         st.error("High risk of **FAILURE** – immediate attention recommended.")
-#     elif proba >= 0.4:
-#         st.warning("Medium risk – monitor the machine closely.")
-#     else:
-#         st.success("Low risk – **no failure** predicted under current conditions.")
+    raw_df = pd.DataFrame([input_dict])
 
-#     # Show user-friendly summary with °C
-#     st.markdown("### 3️⃣ Input Summary (Human-Readable)")
-#     display_df = pd.DataFrame(
-#         [{
-#             "Air temperature [°C]": air_temp_c,
-#             "Process temperature [°C]": process_temp_c,
-#             "Rotational speed [rpm]": rot_speed,
-#             "Torque [Nm]": torque,
-#             "Tool wear [min]": tool_wear,
-#             "Machine Type": machine_type,
-#         }]
-#     )
-#     st.table(display_df)
-# else:
-#     st.info("Fill in the machine parameters above and click **Predict Failure**.")
+    # One-hot encode and align with training features
+    input_encoded = pd.get_dummies(raw_df, drop_first=True)
+    input_encoded = input_encoded.reindex(columns=feature_cols, fill_value=0)
+
+    # Make prediction
+    proba = model.predict_proba(input_encoded)[0, 1]
+    pred = model.predict(input_encoded)[0]
+
+    st.markdown("---")
+    st.subheader("2️⃣ Prediction Result")
+
+    # Display probability nicely
+    st.metric("Failure probability", f"{proba * 100:.2f}%")
+
+    # Risk level message
+    if proba >= 0.7:
+        st.error("High risk of **FAILURE** – immediate attention recommended.")
+    elif proba >= 0.4:
+        st.warning("Medium risk – monitor the machine closely.")
+    else:
+        st.success("Low risk – **no failure** predicted under current conditions.")
+
+    # Show user-friendly summary with °C
+    st.markdown("### 3️⃣ Input Summary (Human-Readable)")
+    display_df = pd.DataFrame(
+        [{
+            "Air temperature [°C]": air_temp_c,
+            "Process temperature [°C]": process_temp_c,
+            "Rotational speed [rpm]": rot_speed,
+            "Torque [Nm]": torque,
+            "Tool wear [min]": tool_wear,
+            "Machine Type": machine_type,
+        }]
+    )
+    st.table(display_df)
+else:
+    st.info("Fill in the machine parameters above and click **Predict Failure**.")
 
 
 # src/app.py
@@ -511,327 +511,327 @@
 
 
 
-import joblib
-import pandas as pd
-import streamlit as st
-import streamlit.components.v1 as components
-from pathlib import Path
-from datetime import datetime
-import random
-import time
+# import joblib
+# import pandas as pd
+# import streamlit as st
+# import streamlit.components.v1 as components
+# from pathlib import Path
+# from datetime import datetime
+# import random
+# import time
 
-# ---------- CONFIG ----------
-st.set_page_config(
-    page_title="Predictive Maintenance Dashboard",
-    page_icon="🛠️",
-    layout="wide"
-)
+# # ---------- CONFIG ----------
+# st.set_page_config(
+#     page_title="Predictive Maintenance Dashboard",
+#     page_icon="🛠️",
+#     layout="wide"
+# )
 
-BASE_DIR = Path(__file__).resolve().parent
+# BASE_DIR = Path(__file__).resolve().parent
 
-MODEL_PATH = BASE_DIR.parent / "models" / "log_reg_model.joblib"
-COLS_PATH = BASE_DIR.parent / "models" / "feature_columns.txt"
-HISTORY_PATH = BASE_DIR.parent / "data" / "history.csv"
-
-
-# ---------- CUSTOM CSS (Dashboard Theme) ----------
-st.markdown("""
-<style>
-    html, body, [class*="css"] {
-        font-family: 'Segoe UI', sans-serif;
-    }
-    .main-title {
-        font-size: 2.2rem;
-        font-weight: 700;
-        color: #1f2937;
-    }
-    .subtitle {
-        color: #6b7280;
-        font-size: 1rem;
-        margin-bottom: 1.5rem;
-    }
-    div[data-testid="stMetric"] {
-        background-color: #ffffff;
-        border: 1px solid #e5e7eb;
-        border-radius: 12px;
-        padding: 15px;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-    }
-    .live-dot {
-        height: 12px;
-        width: 12px;
-        background-color: #2ecc71;
-        border-radius: 50%;
-        display: inline-block;
-        margin-right: 8px;
-        animation: pulse 1.2s infinite;
-    }
-    @keyframes pulse {
-        0% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.6); }
-        70% { box-shadow: 0 0 0 8px rgba(46, 204, 113, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); }
-    }
-    .live-badge {
-        font-weight: 600;
-        color: #16a34a;
-    }
-</style>
-""", unsafe_allow_html=True)
+# MODEL_PATH = BASE_DIR.parent / "models" / "log_reg_model.joblib"
+# COLS_PATH = BASE_DIR.parent / "models" / "feature_columns.txt"
+# HISTORY_PATH = BASE_DIR.parent / "data" / "history.csv"
 
 
-# ---------- LOAD MODEL ----------
-@st.cache_resource
-def load_model_and_columns():
-    model = joblib.load(MODEL_PATH)
-    with open(COLS_PATH, "r") as f:
-        feature_cols = [line.strip() for line in f.readlines()]
-    return model, feature_cols
+# # ---------- CUSTOM CSS (Dashboard Theme) ----------
+# st.markdown("""
+# <style>
+#     html, body, [class*="css"] {
+#         font-family: 'Segoe UI', sans-serif;
+#     }
+#     .main-title {
+#         font-size: 2.2rem;
+#         font-weight: 700;
+#         color: #1f2937;
+#     }
+#     .subtitle {
+#         color: #6b7280;
+#         font-size: 1rem;
+#         margin-bottom: 1.5rem;
+#     }
+#     div[data-testid="stMetric"] {
+#         background-color: #ffffff;
+#         border: 1px solid #e5e7eb;
+#         border-radius: 12px;
+#         padding: 15px;
+#         box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+#     }
+#     .live-dot {
+#         height: 12px;
+#         width: 12px;
+#         background-color: #2ecc71;
+#         border-radius: 50%;
+#         display: inline-block;
+#         margin-right: 8px;
+#         animation: pulse 1.2s infinite;
+#     }
+#     @keyframes pulse {
+#         0% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.6); }
+#         70% { box-shadow: 0 0 0 8px rgba(46, 204, 113, 0); }
+#         100% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); }
+#     }
+#     .live-badge {
+#         font-weight: 600;
+#         color: #16a34a;
+#     }
+# </style>
+# """, unsafe_allow_html=True)
 
 
-model, feature_cols = load_model_and_columns()
+# # ---------- LOAD MODEL ----------
+# @st.cache_resource
+# def load_model_and_columns():
+#     model = joblib.load(MODEL_PATH)
+#     with open(COLS_PATH, "r") as f:
+#         feature_cols = [line.strip() for line in f.readlines()]
+#     return model, feature_cols
 
 
-# ---------- HELPER: SAVE TO HISTORY ----------
-def append_to_history(air_temp_c, process_temp_c, rot_speed, torque,
-                       tool_wear, machine_type, proba, pred):
-    HISTORY_PATH.parent.mkdir(parents=True, exist_ok=True)
-    row = {
-        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "air_temp_c": air_temp_c,
-        "process_temp_c": process_temp_c,
-        "rot_speed_rpm": rot_speed,
-        "torque_nm": torque,
-        "tool_wear_min": tool_wear,
-        "machine_type": machine_type,
-        "failure_probability": proba,
-        "prediction": int(pred),
-    }
-    if HISTORY_PATH.exists():
-        df_old = pd.read_csv(HISTORY_PATH)
-        df_new = pd.concat([df_old, pd.DataFrame([row])], ignore_index=True)
-    else:
-        df_new = pd.DataFrame([row])
-    df_new.to_csv(HISTORY_PATH, index=False)
+# model, feature_cols = load_model_and_columns()
 
 
-# ---------- HELPER: BUILD ENCODED INPUT ----------
-def build_encoded_input(air_temp_c, process_temp_c, rot_speed, torque, tool_wear, machine_type):
-    air_temp_k = air_temp_c + 273.15
-    process_temp_k = process_temp_c + 273.15
-
-    input_dict = {
-        "Air temperature [K]": air_temp_k,
-        "Process temperature [K]": process_temp_k,
-        "Rotational speed [rpm]": rot_speed,
-        "Torque [Nm]": torque,
-        "Tool wear [min]": tool_wear,
-        "Type": machine_type,
-    }
-
-    raw_df = pd.DataFrame([input_dict])
-    input_encoded = pd.get_dummies(raw_df, drop_first=True)
-    input_encoded = input_encoded.reindex(columns=feature_cols, fill_value=0)
-    return input_encoded
-
-
-# ---------- HELPER: ANIMATED SVG GAUGE (JS + HTML) ----------
-def render_gauge(value, label="Failure Risk", height=220):
-    """value = 0-100 percentage. Renders an animated circular gauge using SVG + JS."""
-    color = "#e74c3c" if value >= 70 else "#f39c12" if value >= 40 else "#2ecc71"
-    circumference = 440  # approx 2*pi*r for r=70
-
-    html = f"""
-    <div style="text-align:center; font-family:'Segoe UI', sans-serif;">
-      <svg width="180" height="180" viewBox="0 0 180 180">
-        <circle cx="90" cy="90" r="70" stroke="#e5e7eb" stroke-width="15" fill="none"/>
-        <circle id="arc-{label.replace(' ','')}" cx="90" cy="90" r="70"
-                stroke="{color}" stroke-width="15" fill="none"
-                stroke-dasharray="{circumference}" stroke-dashoffset="{circumference}"
-                stroke-linecap="round" transform="rotate(-90 90 90)"/>
-        <text x="90" y="97" text-anchor="middle" font-size="26" font-weight="bold" fill="{color}">
-          {value:.1f}%
-        </text>
-      </svg>
-      <p style="margin-top:-8px; color:#4b5563; font-weight:600;">{label}</p>
-    </div>
-    <script>
-      (function() {{
-        const arc = document.getElementById("arc-{label.replace(' ','')}");
-        const target = {circumference} - ({circumference} * {value} / 100);
-        let current = {circumference};
-        function step() {{
-          if (current > target) {{
-            current -= 5;
-            if (current < target) current = target;
-            arc.setAttribute("stroke-dashoffset", current);
-            requestAnimationFrame(step);
-          }}
-        }}
-        step();
-      }})();
-    </script>
-    """
-    components.html(html, height=height)
+# # ---------- HELPER: SAVE TO HISTORY ----------
+# def append_to_history(air_temp_c, process_temp_c, rot_speed, torque,
+#                        tool_wear, machine_type, proba, pred):
+#     HISTORY_PATH.parent.mkdir(parents=True, exist_ok=True)
+#     row = {
+#         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+#         "air_temp_c": air_temp_c,
+#         "process_temp_c": process_temp_c,
+#         "rot_speed_rpm": rot_speed,
+#         "torque_nm": torque,
+#         "tool_wear_min": tool_wear,
+#         "machine_type": machine_type,
+#         "failure_probability": proba,
+#         "prediction": int(pred),
+#     }
+#     if HISTORY_PATH.exists():
+#         df_old = pd.read_csv(HISTORY_PATH)
+#         df_new = pd.concat([df_old, pd.DataFrame([row])], ignore_index=True)
+#     else:
+#         df_new = pd.DataFrame([row])
+#     df_new.to_csv(HISTORY_PATH, index=False)
 
 
-# ---------- SIDEBAR ----------
-st.sidebar.title("🛠️ About this app")
-st.sidebar.markdown("""
-This dashboard predicts whether a machine is likely to **fail**
-based on operating conditions.
+# # ---------- HELPER: BUILD ENCODED INPUT ----------
+# def build_encoded_input(air_temp_c, process_temp_c, rot_speed, torque, tool_wear, machine_type):
+#     air_temp_k = air_temp_c + 273.15
+#     process_temp_k = process_temp_c + 273.15
 
-**Tips:**
-- Adjust the values below.
-- Click **Predict Failure** to log a new entry.
-""")
-st.sidebar.markdown("---")
-st.sidebar.header("⚙️ Machine Parameters")
+#     input_dict = {
+#         "Air temperature [K]": air_temp_k,
+#         "Process temperature [K]": process_temp_k,
+#         "Rotational speed [rpm]": rot_speed,
+#         "Torque [Nm]": torque,
+#         "Tool wear [min]": tool_wear,
+#         "Type": machine_type,
+#     }
 
-with st.sidebar.form("input_form"):
-    air_temp_c = st.number_input("Air temperature [°C]", value=27.0,
-                                  help="Ambient temperature around the machine")
-    process_temp_c = st.number_input("Process temperature [°C]", value=37.0,
-                                      help="Temperature of the process or material")
-    rot_speed = st.number_input("Rotational speed [rpm]", value=1500.0, min_value=0.0,
-                                 help="Speed of the spindle or rotating part")
-    torque = st.number_input("Torque [Nm]", value=40.0, min_value=0.0,
-                              help="Torque applied during operation")
-    tool_wear = st.number_input("Tool wear [min]", value=100.0, min_value=0.0,
-                                 help="Total time the tool has been in use")
-    machine_type = st.selectbox("Machine Type", options=["L", "M", "H"],
-                                 help="L = Low quality, M = Medium, H = High")
-
-    submitted = st.form_submit_button("🔍 Predict Failure", use_container_width=True)
-
-st.sidebar.markdown("---")
-st.sidebar.markdown("**Model file:**")
-st.sidebar.code(str(MODEL_PATH))
-
-if HISTORY_PATH.exists():
-    st.sidebar.markdown("**History file:**")
-    st.sidebar.code(str(HISTORY_PATH))
+#     raw_df = pd.DataFrame([input_dict])
+#     input_encoded = pd.get_dummies(raw_df, drop_first=True)
+#     input_encoded = input_encoded.reindex(columns=feature_cols, fill_value=0)
+#     return input_encoded
 
 
-# ---------- MAIN TITLE ----------
-st.markdown('<div class="main-title">🛠️ Predictive Maintenance – Failure Prediction</div>', unsafe_allow_html=True)
-st.markdown('<div class="subtitle">Use the sidebar controls to simulate machine conditions and estimate the probability of machine failure.</div>', unsafe_allow_html=True)
+# # ---------- HELPER: ANIMATED SVG GAUGE (JS + HTML) ----------
+# def render_gauge(value, label="Failure Risk", height=220):
+#     """value = 0-100 percentage. Renders an animated circular gauge using SVG + JS."""
+#     color = "#e74c3c" if value >= 70 else "#f39c12" if value >= 40 else "#2ecc71"
+#     circumference = 440  # approx 2*pi*r for r=70
+
+#     html = f"""
+#     <div style="text-align:center; font-family:'Segoe UI', sans-serif;">
+#       <svg width="180" height="180" viewBox="0 0 180 180">
+#         <circle cx="90" cy="90" r="70" stroke="#e5e7eb" stroke-width="15" fill="none"/>
+#         <circle id="arc-{label.replace(' ','')}" cx="90" cy="90" r="70"
+#                 stroke="{color}" stroke-width="15" fill="none"
+#                 stroke-dasharray="{circumference}" stroke-dashoffset="{circumference}"
+#                 stroke-linecap="round" transform="rotate(-90 90 90)"/>
+#         <text x="90" y="97" text-anchor="middle" font-size="26" font-weight="bold" fill="{color}">
+#           {value:.1f}%
+#         </text>
+#       </svg>
+#       <p style="margin-top:-8px; color:#4b5563; font-weight:600;">{label}</p>
+#     </div>
+#     <script>
+#       (function() {{
+#         const arc = document.getElementById("arc-{label.replace(' ','')}");
+#         const target = {circumference} - ({circumference} * {value} / 100);
+#         let current = {circumference};
+#         function step() {{
+#           if (current > target) {{
+#             current -= 5;
+#             if (current < target) current = target;
+#             arc.setAttribute("stroke-dashoffset", current);
+#             requestAnimationFrame(step);
+#           }}
+#         }}
+#         step();
+#       }})();
+#     </script>
+#     """
+#     components.html(html, height=height)
 
 
-# ---------- PREDICTION RESULT ----------
-if submitted:
-    input_encoded = build_encoded_input(
-        air_temp_c, process_temp_c, rot_speed, torque, tool_wear, machine_type
-    )
+# # ---------- SIDEBAR ----------
+# st.sidebar.title("🛠️ About this app")
+# st.sidebar.markdown("""
+# This dashboard predicts whether a machine is likely to **fail**
+# based on operating conditions.
 
-    proba = model.predict_proba(input_encoded)[0, 1]
-    pred = model.predict(input_encoded)[0]
+# **Tips:**
+# - Adjust the values below.
+# - Click **Predict Failure** to log a new entry.
+# """)
+# st.sidebar.markdown("---")
+# st.sidebar.header("⚙️ Machine Parameters")
 
-    append_to_history(
-        air_temp_c=air_temp_c, process_temp_c=process_temp_c, rot_speed=rot_speed,
-        torque=torque, tool_wear=tool_wear, machine_type=machine_type,
-        proba=proba, pred=pred,
-    )
+# with st.sidebar.form("input_form"):
+#     air_temp_c = st.number_input("Air temperature [°C]", value=27.0,
+#                                   help="Ambient temperature around the machine")
+#     process_temp_c = st.number_input("Process temperature [°C]", value=37.0,
+#                                       help="Temperature of the process or material")
+#     rot_speed = st.number_input("Rotational speed [rpm]", value=1500.0, min_value=0.0,
+#                                  help="Speed of the spindle or rotating part")
+#     torque = st.number_input("Torque [Nm]", value=40.0, min_value=0.0,
+#                               help="Torque applied during operation")
+#     tool_wear = st.number_input("Tool wear [min]", value=100.0, min_value=0.0,
+#                                  help="Total time the tool has been in use")
+#     machine_type = st.selectbox("Machine Type", options=["L", "M", "H"],
+#                                  help="L = Low quality, M = Medium, H = High")
 
-    st.subheader("📊 Prediction Result")
+#     submitted = st.form_submit_button("🔍 Predict Failure", use_container_width=True)
 
-    prediction_label = "⚠️ Failure Likely" if pred == 1 else "✅ Normal Operation"
-    risk_level = "High" if proba >= 0.7 else "Medium" if proba >= 0.4 else "Low"
+# st.sidebar.markdown("---")
+# st.sidebar.markdown("**Model file:**")
+# st.sidebar.code(str(MODEL_PATH))
 
-    col_gauge, col_metrics = st.columns([1, 2])
-
-    with col_gauge:
-        render_gauge(proba * 100, label="Failure Risk")
-
-    with col_metrics:
-        c1, c2 = st.columns(2)
-        with c1:
-            st.metric("Prediction", prediction_label)
-        with c2:
-            st.metric("Risk Level", risk_level)
-
-        if proba >= 0.7:
-            st.error("🚨 High risk of **FAILURE** – immediate attention recommended.")
-        elif proba >= 0.4:
-            st.warning("⚠️ Medium risk – monitor the machine closely.")
-        else:
-            st.success("✅ Low risk – **no failure** predicted under current conditions.")
-
-    st.markdown("#### Input Summary (Human-Readable)")
-    display_df = pd.DataFrame([{
-        "Air temperature [°C]": air_temp_c,
-        "Process temperature [°C]": process_temp_c,
-        "Rotational speed [rpm]": rot_speed,
-        "Torque [Nm]": torque,
-        "Tool wear [min]": tool_wear,
-        "Machine Type": machine_type,
-        "Failure probability": f"{proba * 100:.2f}%",
-        "Prediction (0=no,1=yes)": int(pred),
-    }])
-    st.table(display_df)
-else:
-    st.info("Fill in the machine parameters in the sidebar and click **Predict Failure**.")
+# if HISTORY_PATH.exists():
+#     st.sidebar.markdown("**History file:**")
+#     st.sidebar.code(str(HISTORY_PATH))
 
 
-# ---------- LIVE SIMULATION ----------
-st.markdown("---")
-st.subheader("📡 Live Monitoring Simulation")
-st.caption("Simulates random sensor readings every 2 seconds for 20 cycles, as if streaming from a real machine.")
-
-sim_toggle = st.toggle("Start Live Simulation")
-
-if sim_toggle:
-    st.markdown(
-        '<span class="live-dot"></span><span class="live-badge">LIVE — streaming simulated sensor data</span>',
-        unsafe_allow_html=True
-    )
-
-    placeholder = st.empty()
-
-    for i in range(20):
-        sim_air_temp_c = random.uniform(20, 35)
-        sim_process_temp_c = random.uniform(30, 45)
-        sim_rpm = random.uniform(1000, 2800)
-        sim_torque = random.uniform(10, 70)
-        sim_tool_wear = random.uniform(0, 250)
-        sim_machine_type = random.choice(["L", "M", "H"])
-
-        sim_encoded = build_encoded_input(
-            sim_air_temp_c, sim_process_temp_c, sim_rpm,
-            sim_torque, sim_tool_wear, sim_machine_type
-        )
-        sim_proba = model.predict_proba(sim_encoded)[0, 1]
-
-        with placeholder.container():
-            st.write(f"**Cycle {i + 1}/20** — {time.strftime('%H:%M:%S')}")
-
-            col_g, col_c = st.columns([1, 2])
-            with col_g:
-                render_gauge(sim_proba * 100, label="Live Risk", height=200)
-            with col_c:
-                c1, c2, c3 = st.columns(3)
-                c1.metric("Air Temp", f"{sim_air_temp_c:.1f} °C")
-                c2.metric("Torque", f"{sim_torque:.1f} Nm")
-                c3.metric("Tool Wear", f"{sim_tool_wear:.0f} min")
-
-                if sim_proba >= 0.7:
-                    st.error("🚨 High risk detected in live feed!")
-                elif sim_proba >= 0.4:
-                    st.warning("⚠️ Moderate risk in live feed.")
-                else:
-                    st.success("✅ Normal readings.")
-
-        time.sleep(2)
-
-    st.info("Simulation ended. Toggle off and on to restart.")
+# # ---------- MAIN TITLE ----------
+# st.markdown('<div class="main-title">🛠️ Predictive Maintenance – Failure Prediction</div>', unsafe_allow_html=True)
+# st.markdown('<div class="subtitle">Use the sidebar controls to simulate machine conditions and estimate the probability of machine failure.</div>', unsafe_allow_html=True)
 
 
-# ---------- HISTORY VIEW ----------
-st.markdown("---")
-st.subheader("📜 Prediction History")
+# # ---------- PREDICTION RESULT ----------
+# if submitted:
+#     input_encoded = build_encoded_input(
+#         air_temp_c, process_temp_c, rot_speed, torque, tool_wear, machine_type
+#     )
 
-if HISTORY_PATH.exists():
-    hist_df = pd.read_csv(HISTORY_PATH)
-    with st.expander("Show history table", expanded=False):
-        st.dataframe(hist_df, use_container_width=True)
-else:
-    st.write("No history yet. Make a prediction to start logging.")
+#     proba = model.predict_proba(input_encoded)[0, 1]
+#     pred = model.predict(input_encoded)[0]
+
+#     append_to_history(
+#         air_temp_c=air_temp_c, process_temp_c=process_temp_c, rot_speed=rot_speed,
+#         torque=torque, tool_wear=tool_wear, machine_type=machine_type,
+#         proba=proba, pred=pred,
+#     )
+
+#     st.subheader("📊 Prediction Result")
+
+#     prediction_label = "⚠️ Failure Likely" if pred == 1 else "✅ Normal Operation"
+#     risk_level = "High" if proba >= 0.7 else "Medium" if proba >= 0.4 else "Low"
+
+#     col_gauge, col_metrics = st.columns([1, 2])
+
+#     with col_gauge:
+#         render_gauge(proba * 100, label="Failure Risk")
+
+#     with col_metrics:
+#         c1, c2 = st.columns(2)
+#         with c1:
+#             st.metric("Prediction", prediction_label)
+#         with c2:
+#             st.metric("Risk Level", risk_level)
+
+#         if proba >= 0.7:
+#             st.error("🚨 High risk of **FAILURE** – immediate attention recommended.")
+#         elif proba >= 0.4:
+#             st.warning("⚠️ Medium risk – monitor the machine closely.")
+#         else:
+#             st.success("✅ Low risk – **no failure** predicted under current conditions.")
+
+#     st.markdown("#### Input Summary (Human-Readable)")
+#     display_df = pd.DataFrame([{
+#         "Air temperature [°C]": air_temp_c,
+#         "Process temperature [°C]": process_temp_c,
+#         "Rotational speed [rpm]": rot_speed,
+#         "Torque [Nm]": torque,
+#         "Tool wear [min]": tool_wear,
+#         "Machine Type": machine_type,
+#         "Failure probability": f"{proba * 100:.2f}%",
+#         "Prediction (0=no,1=yes)": int(pred),
+#     }])
+#     st.table(display_df)
+# else:
+#     st.info("Fill in the machine parameters in the sidebar and click **Predict Failure**.")
+
+
+# # ---------- LIVE SIMULATION ----------
+# st.markdown("---")
+# st.subheader("📡 Live Monitoring Simulation")
+# st.caption("Simulates random sensor readings every 2 seconds for 20 cycles, as if streaming from a real machine.")
+
+# sim_toggle = st.toggle("Start Live Simulation")
+
+# if sim_toggle:
+#     st.markdown(
+#         '<span class="live-dot"></span><span class="live-badge">LIVE — streaming simulated sensor data</span>',
+#         unsafe_allow_html=True
+#     )
+
+#     placeholder = st.empty()
+
+#     for i in range(20):
+#         sim_air_temp_c = random.uniform(20, 35)
+#         sim_process_temp_c = random.uniform(30, 45)
+#         sim_rpm = random.uniform(1000, 2800)
+#         sim_torque = random.uniform(10, 70)
+#         sim_tool_wear = random.uniform(0, 250)
+#         sim_machine_type = random.choice(["L", "M", "H"])
+
+#         sim_encoded = build_encoded_input(
+#             sim_air_temp_c, sim_process_temp_c, sim_rpm,
+#             sim_torque, sim_tool_wear, sim_machine_type
+#         )
+#         sim_proba = model.predict_proba(sim_encoded)[0, 1]
+
+#         with placeholder.container():
+#             st.write(f"**Cycle {i + 1}/20** — {time.strftime('%H:%M:%S')}")
+
+#             col_g, col_c = st.columns([1, 2])
+#             with col_g:
+#                 render_gauge(sim_proba * 100, label="Live Risk", height=200)
+#             with col_c:
+#                 c1, c2, c3 = st.columns(3)
+#                 c1.metric("Air Temp", f"{sim_air_temp_c:.1f} °C")
+#                 c2.metric("Torque", f"{sim_torque:.1f} Nm")
+#                 c3.metric("Tool Wear", f"{sim_tool_wear:.0f} min")
+
+#                 if sim_proba >= 0.7:
+#                     st.error("🚨 High risk detected in live feed!")
+#                 elif sim_proba >= 0.4:
+#                     st.warning("⚠️ Moderate risk in live feed.")
+#                 else:
+#                     st.success("✅ Normal readings.")
+
+#         time.sleep(2)
+
+#     st.info("Simulation ended. Toggle off and on to restart.")
+
+
+# # ---------- HISTORY VIEW ----------
+# st.markdown("---")
+# st.subheader("📜 Prediction History")
+
+# if HISTORY_PATH.exists():
+#     hist_df = pd.read_csv(HISTORY_PATH)
+#     with st.expander("Show history table", expanded=False):
+#         st.dataframe(hist_df, use_container_width=True)
+# else:
+#     st.write("No history yet. Make a prediction to start logging.")
