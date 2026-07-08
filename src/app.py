@@ -469,3 +469,13 @@ if HISTORY_PATH.exists():
         st.dataframe(hist_df, use_container_width=True)
 else:
     st.write("No history yet. Make a prediction to start logging.")
+
+
+st.write("BASE_DIR:", BASE_DIR)
+st.write("MODEL_PATH:", MODEL_PATH)
+st.write("MODEL_PATH exists?", MODEL_PATH.exists())
+st.write("Models folder exists?", (BASE_DIR.parent / "models").exists())
+if (BASE_DIR.parent / "models").exists():
+    st.write("Files in models folder:", list((BASE_DIR.parent / "models").iterdir()))
+else:
+    st.write("Files in BASE_DIR.parent:", list(BASE_DIR.parent.iterdir()))
