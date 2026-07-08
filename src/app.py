@@ -260,6 +260,11 @@ MODEL_PATH = BASE_DIR.parent / "models" / "log_reg_model.joblib"
 COLS_PATH = BASE_DIR.parent / "models" / "feature_columns.txt"
 HISTORY_PATH = BASE_DIR.parent / "data" / "history.csv"
 
+st.write("BASE_DIR:", BASE_DIR)
+st.write("MODEL_PATH:", MODEL_PATH)
+st.write("MODEL_PATH exists?", MODEL_PATH.exists())
+st.write("Files in repo root:", list(BASE_DIR.parent.iterdir()))
+
 
 # ---------- LOAD MODEL ----------
 @st.cache_resource
