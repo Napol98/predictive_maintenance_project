@@ -469,8 +469,3 @@ if HISTORY_PATH.exists():
 else:
     st.write("No history yet. Make a prediction to start logging.")
 
-
-if (BASE_DIR.parent / "models").exists():
-    st.write("Files in models folder:", list((BASE_DIR.parent / "models").iterdir()))
-else:
-    st.write("Files in BASE_DIR.parent:", list(BASE_DIR.parent.iterdir()))
