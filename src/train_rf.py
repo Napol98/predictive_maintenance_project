@@ -42,7 +42,7 @@ def train_random_forest():
     auc = roc_auc_score(y_test, y_proba)
     print(f"\nROC-AUC: {auc:.4f}")
 
-    models_dir = Path("../models")
+    models_dir = Path(__file__).resolve().parent.parent / "models"
     models_dir.mkdir(parents=True, exist_ok=True)
 
     model_path = models_dir / "rf_model.joblib"
