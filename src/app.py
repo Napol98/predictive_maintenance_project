@@ -240,6 +240,97 @@
 
 
 
+import streamlit as st
+import hmac
+
+
+def check_login():
+    if "authenticated" not in st.session_state:
+        st.session_state.authenticated = False
+
+    if "username" not in st.session_state:
+        st.session_state.username = ""
+
+    raw_credentials = st.secrets.get("credentials", {})
+
+    credentials = {
+        str(user).strip(): str(password).strip()
+        for user, password in raw_credentials.items()
+    }
+
+    top_col1, top_col2, top_col3 = st.columns([5, 2, 1])
+
+    with top_col1:
+        st.markdown("### Predictive Maintenance Dashboard")
+
+    if st.session_state.authenticated:
+        with top_col2:
+            st.markdown(f"Logged in as **{st.session_state.username}**")
+
+        with top_col3:
+            if st.button("Logout", use_container_width=True):
+                st.session_state.authenticated = False
+                st.session_state.username = ""
+                st.rerun()
+
+        st.divider()
+        return True
+
+    st.divider()
+
+    st.info(f"Credentials loaded: {len(credentials)} user(s)")
+    st.write("Available usernames:", list(credentials.keys()))
+
+    with st.form("login_form"):
+        login_col1, login_col2, login_col3 = st.columns([2, 2, 1])
+
+        with login_col1:
+            username = st.text_input(
+                "Username",
+                placeholder="Username"
+            ).strip()
+
+        with login_col2:
+            password = st.text_input(
+                "Password",
+                type="password",
+                placeholder="Password"
+            ).strip()
+
+        with login_col3:
+            st.write("")
+            submitted = st.form_submit_button(
+                "Login",
+                use_container_width=True
+            )
+
+    if submitted:
+        if username in credentials and hmac.compare_digest(password, credentials[username]):
+            st.session_state.authenticated = True
+            st.session_state.username = username
+            st.rerun()
+        else:
+            st.error("Invalid username or password.")
+
+    return False
+
+
+if not check_login():
+    st.stop()
+
+
+# =========================
+# MAIN DASHBOARD CONTENT
+# =========================
+
+st.title("Main Dashboard")
+
+st.write("Dashboard content goes here.")
+
+
+
+
+
 import joblib
 import pandas as pd
 import streamlit as st
@@ -631,92 +722,6 @@ if uploaded_file is not None:
 
 
 
-import streamlit as st
-import hmac
-
-
-def check_login():
-    if "authenticated" not in st.session_state:
-        st.session_state.authenticated = False
-
-    if "username" not in st.session_state:
-        st.session_state.username = ""
-
-    raw_credentials = st.secrets.get("credentials", {})
-
-    credentials = {
-        str(user).strip(): str(password).strip()
-        for user, password in raw_credentials.items()
-    }
-
-    top_col1, top_col2, top_col3 = st.columns([5, 2, 1])
-
-    with top_col1:
-        st.markdown("### Predictive Maintenance Dashboard")
-
-    if st.session_state.authenticated:
-        with top_col2:
-            st.markdown(f"Logged in as **{st.session_state.username}**")
-
-        with top_col3:
-            if st.button("Logout", use_container_width=True):
-                st.session_state.authenticated = False
-                st.session_state.username = ""
-                st.rerun()
-
-        st.divider()
-        return True
-
-    st.divider()
-
-    st.info(f"Credentials loaded: {len(credentials)} user(s)")
-    st.write("Available usernames:", list(credentials.keys()))
-
-    with st.form("login_form"):
-        login_col1, login_col2, login_col3 = st.columns([2, 2, 1])
-
-        with login_col1:
-            username = st.text_input(
-                "Username",
-                placeholder="Username"
-            ).strip()
-
-        with login_col2:
-            password = st.text_input(
-                "Password",
-                type="password",
-                placeholder="Password"
-            ).strip()
-
-        with login_col3:
-            st.write("")
-            submitted = st.form_submit_button(
-                "Login",
-                use_container_width=True
-            )
-
-    if submitted:
-        if username in credentials and hmac.compare_digest(password, credentials[username]):
-            st.session_state.authenticated = True
-            st.session_state.username = username
-            st.rerun()
-        else:
-            st.error("Invalid username or password.")
-
-    return False
-
-
-if not check_login():
-    st.stop()
-
-
-# =========================
-# MAIN DASHBOARD CONTENT
-# =========================
-
-st.title("Main Dashboard")
-
-st.write("Dashboard content goes here.")
 
 
 # import joblib
