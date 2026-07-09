@@ -511,6 +511,84 @@ else:
 
 
 
+
+import pandas as pd
+import streamlit as st
+
+st.markdown("## 📁 Batch Prediction — Upload Machine Dataset")
+
+uploaded_file = st.file_uploader(
+    "Upload a CSV file with machine sensor readings",
+    type=["csv"],
+    help="CSV must contain the same feature columns used to train the model."
+)
+
+if uploaded_file is not None:
+    try:
+        batch_df = pd.read_csv(uploaded_file)
+        st.success(f"✅ Loaded {len(batch_df)} rows from `{uploaded_file.name}`")
+
+        with st.expander("Preview uploaded data", expanded=False):
+            st.dataframe(batch_df.head(10), use_container_width=True)
+
+        # --- Encode + align each row using your existing pipeline ---
+        encoded_rows = []
+        for _, row in batch_df.iterrows():
+            encoded_row = build_encoded_input(row.to_dict())  # reuse your existing function
+            encoded_rows.append(encoded_row)
+
+        batch_encoded = pd.DataFrame(encoded_rows)
+        batch_encoded = batch_encoded.reindex(columns=feature_cols, fill_value=0)
+
+        # --- Run predictions ---
+        probs = model.predict_proba(batch_encoded)[:, 1]  # probability of failure
+        preds = model.predict(batch_encoded)
+
+        results_df = batch_df.copy()
+        results_df["failure_probability"] = probs
+        results_df["prediction"] = preds
+
+        def risk_label(p):
+            if p >= 0.7:
+                return "🔴 High Risk"
+            elif p >= 0.3:
+                return "🟡 Medium Risk"
+            else:
+                return "🟢 Low Risk"
+
+        results_df["risk_level"] = results_df["failure_probability"].apply(risk_label)
+
+        # --- Summary metrics ---
+        col1, col2, col3 = st.columns(3)
+        col1.metric("Total Machines", len(results_df))
+        col2.metric("High Risk", (results_df["failure_probability"] >= 0.7).sum())
+        col3.metric("Avg. Risk Probability", f"{results_df['failure_probability'].mean():.1%}")
+
+        # --- Results table, sorted by highest risk first ---
+        st.markdown("### 🔍 Prediction Results")
+        display_df = results_df.sort_values("failure_probability", ascending=False)
+        st.dataframe(
+            display_df.style.background_gradient(
+                subset=["failure_probability"], cmap="RdYlGn_r"
+            ),
+            use_container_width=True
+        )
+
+        # --- Download button ---
+        csv_bytes = display_df.to_csv(index=False).encode("utf-8")
+        st.download_button(
+            label="⬇️ Download Results as CSV",
+            data=csv_bytes,
+            file_name="batch_predictions.csv",
+            mime="text/csv"
+        )
+
+    except Exception as e:
+        st.error(f"⚠️ Something went wrong processing the file: {e}")
+        st.info("Make sure your CSV columns match the expected input format.")
+
+
+
 # import joblib
 # import pandas as pd
 # import streamlit as st
