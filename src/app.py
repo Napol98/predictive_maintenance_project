@@ -631,8 +631,8 @@ if uploaded_file is not None:
 
 
 
-import hmac
 import streamlit as st
+import hmac
 
 
 def check_login():
@@ -645,15 +645,26 @@ def check_login():
     if st.session_state.authenticated:
         with st.sidebar:
             st.success(f"Logged in as {st.session_state.username}")
-
             if st.button("Logout"):
                 st.session_state.authenticated = False
                 st.session_state.username = ""
                 st.rerun()
-
         return True
 
     st.title("Login")
+
+    # Load credentials safely
+    raw_credentials = st.secrets.get("credentials", {})
+
+    # Normalize username/password to avoid hidden spaces or non-string values
+    credentials = {
+        str(user).strip(): str(password).strip()
+        for user, password in raw_credentials.items()
+    }
+
+    # Temporary debug info
+    st.info(f"Credentials loaded: {len(credentials)} user(s)")
+    st.write("Available usernames:", list(credentials.keys()))
 
     with st.form("login_form"):
         username = st.text_input("Username").strip()
@@ -661,17 +672,10 @@ def check_login():
         submitted = st.form_submit_button("Login")
 
     if submitted:
-        credentials = st.secrets.get("credentials", {})
-
-        if username in credentials:
-            correct_password = str(credentials[username])
-
-            if hmac.compare_digest(password, correct_password):
-                st.session_state.authenticated = True
-                st.session_state.username = username
-                st.rerun()
-            else:
-                st.error("Invalid username or password.")
+        if username in credentials and hmac.compare_digest(password, credentials[username]):
+            st.session_state.authenticated = True
+            st.session_state.username = username
+            st.rerun()
         else:
             st.error("Invalid username or password.")
 
