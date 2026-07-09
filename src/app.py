@@ -630,6 +630,55 @@ if uploaded_file is not None:
         st.info("Make sure your CSV columns match the expected input format.")
 
 
+
+import hmac
+import streamlit as st
+
+
+def check_login():
+    if "authenticated" not in st.session_state:
+        st.session_state.authenticated = False
+
+    if st.session_state.authenticated:
+        with st.sidebar:
+            st.success(f"Logged in as {st.session_state.username}")
+
+            if st.button("Logout"):
+                st.session_state.authenticated = False
+                st.session_state.username = ""
+                st.rerun()
+
+        return True
+
+    st.title("Login")
+
+    with st.form("login_form"):
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
+        submitted = st.form_submit_button("Login")
+
+    if submitted:
+        credentials = st.secrets.get("credentials", {})
+
+        if username in credentials:
+            correct_password = credentials[username]
+
+            if hmac.compare_digest(password, correct_password):
+                st.session_state.authenticated = True
+                st.session_state.username = username
+                st.rerun()
+            else:
+                st.error("Invalid username or password.")
+        else:
+            st.error("Invalid username or password.")
+
+    return False
+
+
+if not check_login():
+    st.stop()
+
+
 # import joblib
 # import pandas as pd
 # import streamlit as st
