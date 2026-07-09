@@ -1053,8 +1053,10 @@ def check_login():
 
     # Debug information
     # Remove these two lines after login works
-    st.info(f"Credentials loaded: {len(credentials)} user(s)")
-    st.write("Available usernames:", list(credentials.keys()))
+    # st.info(f"Credentials loaded: {len(credentials)} user(s)")
+    # st.write("Available usernames:", list(credentials.keys()))
+    st.caption("Please log in to continue.")
+
 
     if submitted:
         if username in credentials and hmac.compare_digest(password, credentials[username]):
