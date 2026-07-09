@@ -639,6 +639,9 @@ def check_login():
     if "authenticated" not in st.session_state:
         st.session_state.authenticated = False
 
+    if "username" not in st.session_state:
+        st.session_state.username = ""
+
     if st.session_state.authenticated:
         with st.sidebar:
             st.success(f"Logged in as {st.session_state.username}")
@@ -653,15 +656,15 @@ def check_login():
     st.title("Login")
 
     with st.form("login_form"):
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
+        username = st.text_input("Username").strip()
+        password = st.text_input("Password", type="password").strip()
         submitted = st.form_submit_button("Login")
 
     if submitted:
         credentials = st.secrets.get("credentials", {})
 
         if username in credentials:
-            correct_password = credentials[username]
+            correct_password = str(credentials[username])
 
             if hmac.compare_digest(password, correct_password):
                 st.session_state.authenticated = True
