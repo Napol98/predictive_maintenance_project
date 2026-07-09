@@ -1,0 +1,9 @@
+services:
+  predictive-maintenance-app:
+    build: .
+    container_name: pred-app
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
