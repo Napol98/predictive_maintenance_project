@@ -266,9 +266,16 @@ HISTORY_PATH = BASE_DIR.parent / "data" / "history.csv"
 @st.cache_resource
 def load_model_and_columns():
     model = joblib.load(MODEL_PATH)
+
+    # Compatibility fix for LogisticRegression models saved with a different scikit-learn version
+    if model.__class__.__name__ == "LogisticRegression" and not hasattr(model, "multi_class"):
+        model.multi_class = "auto"
+
     with open(COLS_PATH, "r") as f:
         feature_cols = [line.strip() for line in f.readlines()]
+
     return model, feature_cols
+
 
 
 model, feature_cols = load_model_and_columns()
